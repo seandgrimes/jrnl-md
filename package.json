@@ -1,0 +1,36 @@
+{
+  "name": "jrnl-md",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "chai": "^4.1.2",
+    "marked": "^0.3.16",
+    "marked-terminal": "^2.0.0",
+    "moment": "^2.20.1",
+    "typed-promisify": "^0.4.0",
+    "typescript": "^2.7.2",
+    "unique-filename": "^1.1.0",
+    "yargs": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^9.4.6",
+    "@types/yargs": "^11.0.0",
+    "gulp": "^3.9.1",
+    "gulp-typescript": "^3.2.4",
+    "mocha": "^4.0.1"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/seandgrimes/jrnl-md.git"
+  },
+  "author": "",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/seandgrimes/jrnl-md/issues"
+  },
+  "homepage": "https://github.com/seandgrimes/jrnl-md#readme"
+}
