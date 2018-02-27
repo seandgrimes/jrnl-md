@@ -64,18 +64,14 @@ export class Application {
     }
   }
 
+  /**
+   * Edit the journal entries that match the supplied filter, opening
+   * them in the user's default editor one at a time
+   * 
+   * @param filter The filter to use to determine which journal entries to edit
+   */
   editJournalEntries(filter: Filter) {
 
-  }
-
-  async showJournalEntries(filter: Filter) {
-    let filename = filter.journal;
-    if (!filename.endsWith('.json')) {
-      filename += '.json';
-    }
-
-    let entries = await this.storageService.loadEntries(filename);
-    entries.forEach(entry => console.log(marked(entry.body.trim())));
   }
 
   /** 
@@ -91,5 +87,21 @@ export class Application {
     marked.setOptions({
       renderer: new TerminalRenderer()
     });
+  }
+
+  /**
+   * Show the journal entries that match the supplied filter in the terminal
+   * after rendering them from Markdown
+   * 
+   * @param filter The filter to use to determine which journal entries to show
+   */
+  async showJournalEntries(filter: Filter) {
+    let filename = filter.journal;
+    if (!filename.endsWith('.json')) {
+      filename += '.json';
+    }
+
+    let entries = await this.storageService.loadEntries(filename);
+    entries.forEach(entry => console.log(marked(entry.body.trim())));
   }
 }
