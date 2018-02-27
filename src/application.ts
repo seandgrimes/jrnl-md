@@ -1,23 +1,45 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import * as marked from 'marked';
+import * as TerminalRenderer from 'marked-terminal';
 import {EditorService} from './editor/editor-service';
 import {Entry} from './storage/entry';
+import {Filter} from './filter/filter';
 import {StorageService} from './storage/storage-service';
 
+/** 
+ * Represents our application logic, this class is what the
+ * CLI interacts with to accomplish whatever the user is
+ * requesting
+*/
 export class Application {
   private appDir: string;
   private editorService = new EditorService();
   private storageService: StorageService;
 
+  /** 
+   * Constructor
+  */
   constructor() {
     this.appDir = path.join(os.homedir(), '.jrnl-md');
     this.storageService = new StorageService(this.appDir);
     this.initialize();
   }
 
+  /**
+   * Create a new journal entry using the user's default
+   * editor and then save the newly created journal entry
+   * to the specified filename.
+   * 
+   * @param filename The filename to save the entries to
+   */
   async createJournalEntry(filename: string) {
     let journals: Entry[] = [];
+    
+    if (!filename.endsWith('.json')) {
+      filename = filename + '.json';
+    }
 
     try {
       const journalPath = path.join(this.appDir, filename);
@@ -26,7 +48,7 @@ export class Application {
       }
     } catch (ex) {
       console.log(`Error opening journal file: ${ex}`);
-      throw ex;
+      console.log(ex.stack);
     }
     
     try {
@@ -38,13 +60,36 @@ export class Application {
     }
     catch (ex) {
       console.log(`Error creating journal entry: ${ex}`);
-      throw ex;
+      console.log(ex.stack);
     }
   }
 
+  editJournalEntries(filter: Filter) {
+
+  }
+
+  async showJournalEntries(filter: Filter) {
+    let filename = filter.journal;
+    if (!filename.endsWith('.json')) {
+      filename += '.json';
+    }
+
+    let entries = await this.storageService.loadEntries(filename);
+    entries.forEach(entry => console.log(marked(entry.body.trim())));
+  }
+
+  /** 
+   * Takes care of any initialization that needs to be done when the app
+   * first starts up, good example would be upgrading files or creating
+   * the initial app directory for the user
+  */
   private initialize() {
     if (!fs.existsSync(this.appDir)) {
       fs.mkdirSync(this.appDir);
     }
+
+    marked.setOptions({
+      renderer: new TerminalRenderer()
+    });
   }
 }

@@ -10,7 +10,7 @@ export class TempFileParser {
     let lines = contents.split('\n');
     
     const entry: Entry = {
-      date: lines.shift(),
+      date: lines[0],
       body: lines.join('\n')
     };
 
