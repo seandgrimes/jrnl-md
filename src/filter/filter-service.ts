@@ -35,44 +35,6 @@ enum DuplicateStrategy {
  */
 export class FilterService {
   /**
-   * Performs a binary search to find the index of the needle within the haystack.
-   * Since we may have sorted duplicates in the haystack, we can use the supplied
-   * DuplicateStrategy to find the first or last index where the needle appears.
-   * 
-   * @param haystack The entries to search
-   * @param needle The value to find the index of, in this case the date of the journal entry
-   * @param duplicateStrategy The strategy to use when finding the correct index when duplicates exist
-   * 
-   * @returns The index of the needle, or -1 if the needle couldn't be found
-   */
-  private binarySearch(haystack: Entry[], needle: string, duplicateStrategy: DuplicateStrategy) : number {
-    let left = 0;
-    let right = haystack.length-1;
-    
-    while (true) {
-      if (left > right) return -1; // Not found
-
-      let middle = Math.floor((left+right)/2);
-      let entry = haystack[middle];
-
-      if (moment(entry.date).isBefore(needle)) {
-        left = middle + 1;
-        continue;
-      }
-
-      if (moment(entry.date).isAfter(needle)) {
-        right = middle - 1;
-        continue;
-      }
-
-      if (moment(entry.date).isSame(needle)) {
-        // Do we want to handle duplicates here?
-        return middle;
-      }
-    }
-  }
-
-  /**
    * Filters the supplied journal entries by the given filter, only returning those
    * entries that are matched by the filter
    * 
@@ -101,19 +63,18 @@ export class FilterService {
    * 
    * @param entries The entries to filter
    * @param startDate The date that entries were created on or after
-   * @param startIndex The index to start from if we already know where the first entry is
    */
-  private filterFrom(entries: Entry[], startDate: string, startIndex: number = null) : FilterResult[] {
-    startIndex = startIndex || this.binarySearch(entries, startDate, DuplicateStrategy.checkLeft);
+  private filterFrom(entries: Entry[], startDate: string) : FilterResult[] {
+    const startIndex = this.findFirstOnOrAfterDate(entries, startDate, DuplicateStrategy.checkLeft);
     const endIndex = entries.length-1;
 
     // No entries found
     if (startIndex === -1) return [];
 
-    const filtered = entries.slice(startIndex, endIndex-startIndex)
+    const filtered = entries.slice(startIndex)
       .map((value, idx) => {
         return {
-          position: idx,
+          position: idx + startIndex,
           entry: value
         }
       });
@@ -130,7 +91,7 @@ export class FilterService {
    * @returns The last n elements of the entries array
    */
   private filterLast(entries: Entry[], count: number) : FilterResult[] {
-    const last = entries.slice(entries.length-count -1);
+    const last = entries.slice(-1*count);
     const filtered = last.map<FilterResult>((value, idx) => { 
       return { 
         position: entries.length-count-idx-1, 
@@ -152,8 +113,8 @@ export class FilterService {
    * @returns The filtered entries
    */
   private filterRange(entries: Entry[], startDate: string, endDate: string) : FilterResult[] {
-    const startIndex = this.binarySearch(entries, startDate, DuplicateStrategy.checkLeft);
-    const endIndex = this.binarySearch(entries, endDate, DuplicateStrategy.checkRight);
+    const startIndex = this.findFirstOnOrAfterDate(entries, startDate, DuplicateStrategy.checkLeft);
+    const endIndex = this.findFirstOnOrAfterDate(entries, endDate, DuplicateStrategy.checkRight);
 
     if (startIndex >= 0 && endIndex === -1) {
       const filtered = this.filterLast(entries, entries.length-startIndex-1)
@@ -167,5 +128,83 @@ export class FilterService {
         entry: value
       }
     });
+  }
+
+  /**
+   * Performs a modified binary search to find the index of the first entry
+   * that occurred on or after the date passed to the method. If the date 
+   * supplied occurs before the date of all the journal entries, then the method
+   * will return 0. If the date supplied occurs after the date of all the journal
+   * entries, then -1 will be returned to signify there are no matches. Otherwise
+   * the index of the first journal entry whose date is an exact match or the index
+   * of the first journal whose date occurs after the supplied date will be returned.
+   * 
+   * @param entries The entries to search
+   * @param date The date to use when finding journal entries that were created on or after that date
+   * @param duplicateStrategy The strategy to use when finding the correct index when duplicates exist
+   * 
+   * @returns The index of the first match, or -1 if a match couldn't be found
+   */
+  private findFirstOnOrAfterDate(entries: Entry[], date: string, duplicateStrategy: DuplicateStrategy) : number {
+    let left = 0;
+    let right = entries.length-1;
+
+    while (true) {
+      // Not found. Needle is greater than everything in the haystack
+      // so need to exclude everything
+      if (left > right && left >= entries.length) return -1;
+
+      // Not found. Needle is smaller than everything in the haystack
+      // so need to include everything
+      if (left > right && right < 0) return 0;
+
+      // Not found. The value of left will always point to the index
+      // of the first item in the haystack that was bigger than the
+      // needle      
+      if (left > right) return left;
+
+      let middle = Math.floor((left+right)/2);
+      let entry = entries[middle];
+
+      if (moment(entry.date).isBefore(date)) {
+        left = middle + 1;
+        continue;
+      }
+
+      if (moment(entry.date).isAfter(date)) {
+        right = middle - 1;
+        continue;
+      }
+
+      if (moment(entry.date).isSame(date)) {
+        middle = this.handleDuplicateMatches(entries, middle, duplicateStrategy);
+        return middle;
+      }
+    }
+  }
+
+  /**
+   * It's possible that we have multiple journal entries with the same date, so we need
+   * to find the index of the duplicate that is furthest right or left of the found item,
+   * depending on the use case
+   * 
+   * @param entries The entries array containing the found item 
+   * @param foundIndex The index of the item that was found by our binary search algorithm
+   * @param duplicateStrategy Whether to search left or right for duplicates
+   */
+  private handleDuplicateMatches(entries: Entry[], foundIndex: number, duplicateStrategy: DuplicateStrategy) : number {
+    const incrementer = duplicateStrategy === DuplicateStrategy.checkRight ? 1 : - 1;
+    let startOn = duplicateStrategy === DuplicateStrategy.checkRight ? foundIndex + 1 : foundIndex - 1;
+    const stopOn = duplicateStrategy === DuplicateStrategy.checkRight ? entries.length : -1;
+    const foundCreatedOn = moment(entries[foundIndex].date);
+    
+    let lastIndex = foundIndex;
+    while (startOn != stopOn) {
+      const currentDate = entries[startOn].date;
+      if (!foundCreatedOn.isSame(currentDate)) return lastIndex;
+
+      lastIndex = startOn;
+      startOn += incrementer;
+    }
   }
 }
