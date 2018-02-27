@@ -6,6 +6,7 @@ import * as TerminalRenderer from 'marked-terminal';
 import {EditorService} from './editor/editor-service';
 import {Entry} from './storage/entry';
 import {Filter} from './filter/filter';
+import {FilterService} from './filter/filter-service';
 import {StorageService} from './storage/storage-service';
 
 /** 
@@ -16,6 +17,7 @@ import {StorageService} from './storage/storage-service';
 export class Application {
   private appDir: string;
   private editorService = new EditorService();
+  private filterService = new FilterService();
   private storageService: StorageService;
 
   /** 
@@ -102,6 +104,7 @@ export class Application {
     }
 
     let entries = await this.storageService.loadEntries(filename);
-    entries.forEach(entry => console.log(marked(entry.body.trim())));
+    let filtered = this.filterService.filter(entries, filter).map(e => e.entry);
+    filtered.forEach(entry => console.log(marked(entry.body.trim())));
   }
 }

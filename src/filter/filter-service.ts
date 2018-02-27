@@ -66,7 +66,6 @@ export class FilterService {
    */
   private filterFrom(entries: Entry[], startDate: string) : FilterResult[] {
     const startIndex = this.findFirstOnOrAfterDate(entries, startDate, DuplicateStrategy.checkLeft);
-    const endIndex = entries.length-1;
 
     // No entries found
     if (startIndex === -1) return [];
@@ -91,6 +90,7 @@ export class FilterService {
    * @returns The last n elements of the entries array
    */
   private filterLast(entries: Entry[], count: number) : FilterResult[] {
+    
     const last = entries.slice(-1*count);
     const filtered = last.map<FilterResult>((value, idx) => { 
       return { 
@@ -117,11 +117,11 @@ export class FilterService {
     const endIndex = this.findFirstOnOrAfterDate(entries, endDate, DuplicateStrategy.checkRight);
 
     if (startIndex >= 0 && endIndex === -1) {
-      const filtered = this.filterLast(entries, entries.length-startIndex-1)
+      const filtered = this.filterLast(entries, entries.length-startIndex)
       return filtered;
     }
 
-    const filtered = entries.slice(startIndex, endIndex-startIndex);
+    const filtered = entries.slice(startIndex, endIndex+1);
     return filtered.map((value, index) => {
       return {
         position: index + startIndex,
