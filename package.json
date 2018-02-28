@@ -27,7 +27,7 @@
     "type": "git",
     "url": "git+https://github.com/seandgrimes/jrnl-md.git"
   },
-  "author": "",
+  "author": "Sean Grimes <sean@codemunkey.net>",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/seandgrimes/jrnl-md/issues"
