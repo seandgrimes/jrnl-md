@@ -1,9 +1,11 @@
 import * as os from 'os';
 import * as yargs from 'yargs';
+import "reflect-metadata";
 import {Application} from './application';
+import {container} from './inversify.config'
 import {Filter} from './filter/filter';
 
-const application = new Application();
+const application = container.get<Application>(Application);
 
 const argv = yargs
   .command(

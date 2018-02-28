@@ -3,6 +3,7 @@ import * as moment from 'moment';
 import * as os from 'os';
 import * as process from 'process';
 import * as uniqueFilename from 'unique-filename';
+import {injectable} from 'inversify';
 import {spawn} from 'child_process';
 import {Entry} from '../storage/entry';
 import {TempFileParser} from './tempfile-parser';
@@ -12,6 +13,7 @@ import {TempFileParser} from './tempfile-parser';
  * default text editor to create and edit existing
  * journal entries
 */
+@injectable()
 export class EditorService {
   private editor: string;
   private tmpDir: string;

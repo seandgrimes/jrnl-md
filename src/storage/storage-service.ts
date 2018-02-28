@@ -1,4 +1,5 @@
 import {Entry} from './entry';
+import {injectable} from 'inversify';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -6,6 +7,7 @@ import * as fs from 'fs';
  * Storage service used for writing and retrieving
  * the data file that contains the journal entries
 */
+@injectable()
 export class StorageService {
   /**
    * Constructor

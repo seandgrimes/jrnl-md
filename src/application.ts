@@ -3,6 +3,7 @@ import * as os from 'os';
 import * as path from 'path';
 import * as marked from 'marked';
 import * as TerminalRenderer from 'marked-terminal';
+import {injectable} from 'inversify';
 import {EditorService} from './editor/editor-service';
 import {Entry} from './storage/entry';
 import {Filter} from './filter/filter';
@@ -14,6 +15,7 @@ import {StorageService} from './storage/storage-service';
  * CLI interacts with to accomplish whatever the user is
  * requesting
 */
+@injectable()
 export class Application {
   private appDir: string;
   private editorService = new EditorService();

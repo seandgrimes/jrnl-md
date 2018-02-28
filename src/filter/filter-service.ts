@@ -1,3 +1,4 @@
+import {injectable} from 'inversify';
 import {Entry} from '../storage/entry';
 import {Filter} from './filter';
 import * as moment from 'moment';
@@ -33,6 +34,7 @@ enum DuplicateStrategy {
  * Service used to filter journal entries based off the filter criteria
  * supplied by the user 
  */
+@injectable()
 export class FilterService {
   /**
    * Filters the supplied journal entries by the given filter, only returning those
