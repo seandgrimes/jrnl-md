@@ -72,8 +72,29 @@ export class Application {
    * 
    * @param filter The filter to use to determine which journal entries to edit
    */
-  editJournalEntries(filter: Filter) {
+  async editJournalEntries(filter: Filter) {
+    let filename = this.getFileName(filter.journal);
+    let entries = await this.storageService.loadEntries(filename);
+    let filtered = this.filterService.filter(entries, filter);
 
+    for (var entry of filtered) {
+      const updated = await this.editorService.editJournalEntry(entry.entry);
+      entries[entry.position] = updated;
+    }
+
+    await this.storageService.saveEntries(filename, entries);
+  }
+
+  /**
+   * Gets the filename for the provided journal
+   * 
+   * @param journal The journal to return the filename of
+   * @returns The filename of the journal
+   */
+  private getFileName(journal: string) : string {
+    return !journal.endsWith('.json')
+      ? journal + '.json'
+      : journal;
   }
 
   /** 
@@ -98,11 +119,7 @@ export class Application {
    * @param filter The filter to use to determine which journal entries to show
    */
   async showJournalEntries(filter: Filter) {
-    let filename = filter.journal;
-    if (!filename.endsWith('.json')) {
-      filename += '.json';
-    }
-
+    let filename = this.getFileName(filter.journal);
     let entries = await this.storageService.loadEntries(filename);
     let filtered = this.filterService.filter(entries, filter).map(e => e.entry);
     filtered.forEach(entry => console.log(marked(entry.body.trim())));
