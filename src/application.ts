@@ -18,14 +18,19 @@ import {StorageService} from './storage/storage-service';
 @injectable()
 export class Application {
   private appDir: string;
-  private editorService = new EditorService();
-  private filterService = new FilterService();
-  private storageService: StorageService;
-
+  
   /** 
    * Constructor
+   * 
+   * @param editorService The EditorService implementation to use
+   * @param filterService The FilterService implementation to use
+   * @param storageService The StorageService implementation to use
   */
-  constructor() {
+  constructor(
+      private editorService:EditorService, 
+      private filterService:FilterService, 
+      private storageService:StorageService) {
+        
     this.appDir = path.join(os.homedir(), '.jrnl-md');
     this.storageService = new StorageService(this.appDir);
     this.initialize();

@@ -12,6 +12,7 @@ const appDir = path.join(os.homedir(), '.jrnl-md');
 const container = new Container();
 container.bind<Application>(Application).toSelf();
 container.bind<EditorService>(EditorService).toSelf();
+container.bind<FilterService>(FilterService).toSelf();
 container.bind<StorageService>(StorageService).toConstantValue(new StorageService(appDir));
 
 export { container };
