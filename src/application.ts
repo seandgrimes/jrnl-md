@@ -3,10 +3,11 @@ import * as os from 'os';
 import * as path from 'path';
 import * as marked from 'marked';
 import * as TerminalRenderer from 'marked-terminal';
+import "reflect-metadata";
 import {injectable} from 'inversify';
 import {EditorService} from './editor/editor-service';
 import {Entry} from './storage/entry';
-import {Filter} from './filter/filter';
+import {FilterParams} from './filter/filter-params';
 import {FilterService} from './filter/filter-service';
 import {StorageService} from './storage/storage-service';
 
@@ -30,7 +31,7 @@ export class Application {
       private editorService:EditorService, 
       private filterService:FilterService, 
       private storageService:StorageService) {
-        
+
     this.appDir = path.join(os.homedir(), '.jrnl-md');
     this.storageService = new StorageService(this.appDir);
     this.initialize();
@@ -79,7 +80,7 @@ export class Application {
    * 
    * @param filter The filter to use to determine which journal entries to edit
    */
-  async editJournalEntries(filter: Filter) {
+  async editJournalEntries(filter: FilterParams) {
     let filename = this.getFileName(filter.journal);
     let entries = await this.storageService.loadEntries(filename);
     let filtered = this.filterService.filter(entries, filter);
@@ -125,7 +126,7 @@ export class Application {
    * 
    * @param filter The filter to use to determine which journal entries to show
    */
-  async showJournalEntries(filter: Filter) {
+  async showJournalEntries(filter: FilterParams) {
     let filename = this.getFileName(filter.journal);
     let entries = await this.storageService.loadEntries(filename);
     let filtered = this.filterService.filter(entries, filter).map(e => e.entry);

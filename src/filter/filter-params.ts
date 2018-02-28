@@ -1,4 +1,4 @@
-export interface Filter {
+export interface FilterParams {
     journal: string,
     from: string,
     to: string,

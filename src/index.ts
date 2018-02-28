@@ -1,9 +1,8 @@
 import * as os from 'os';
 import * as yargs from 'yargs';
-import "reflect-metadata";
 import {Application} from './application';
 import {container} from './inversify.config'
-import {Filter} from './filter/filter';
+import {FilterParams} from './filter/filter-params';
 
 const application = container.get<Application>(Application);
 
@@ -29,7 +28,7 @@ const argv = yargs
       });
     },
     (args) => {
-      const filter = (args as any) as Filter; 
+      const filter = (args as any) as FilterParams; 
       application.editJournalEntries(filter);
     }
   )
@@ -42,7 +41,7 @@ const argv = yargs
       });
     },
     (args) => {
-      const filter = (args as any) as Filter; 
+      const filter = (args as any) as FilterParams; 
       application.showJournalEntries(filter);
     }
   )
