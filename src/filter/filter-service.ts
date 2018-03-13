@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import {injectable} from 'inversify';
 import {Entry} from '../storage/entry';
 import {FilterParams} from './filter-params';
