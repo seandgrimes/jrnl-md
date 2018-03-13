@@ -31,11 +31,11 @@ describe('The RangeFilter', () => {
     filterParams.from = '2018-02-18';
     filterParams.to = '2018-02-21';
     const sut = new RangeFilter();
-    const expected = testEntries.slice(-1);
+    const expected = testEntries.slice(0, 3);
 
     // Act
     var results = sut.execute(testEntries, filterParams).map(fr => fr.entry);
-
+    
     // Assert
     expect(results).to.deep.equal(expected);
   });
