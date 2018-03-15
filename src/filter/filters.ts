@@ -289,3 +289,20 @@ export class LastFilter extends BaseFilter implements Filter {
     return this.isDefined(filterParams.last);
   }
 }
+
+export class OnFilter extends BaseFilter implements Filter {
+  public execute(entries: Entry[], filterParams: FilterParams) : FilterResult[] {
+    return [];
+  }
+
+  /**
+   * Whether or not the filter should be executed base off the
+   * supplied filter parameters
+   *
+   * @param filter The filter parameters to check
+   * @returns True if the filter should execute, false otherwise
+   */
+  public shouldExecute(filterParams: FilterParams) : boolean {
+    return this.isDefined(filterParams.on);
+  }
+}
