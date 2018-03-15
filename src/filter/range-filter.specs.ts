@@ -10,13 +10,7 @@ describe('The RangeFilter', () => {
   let filterParams: FilterParams = null;
 
   before(() => {
-    filterParams = {
-      from: null,
-      to: null,
-      on: null,
-      last: null,
-      journal: 'personal'
-    };
+    filterParams = { journal: 'personal' };
   });
 
   describe('Should return the correct results', () => {

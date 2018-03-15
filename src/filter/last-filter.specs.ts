@@ -19,13 +19,7 @@ describe('The LastFilter', () => {
   let filterParams : FilterParams = null;
 
   before(() => {
-    filterParams = {
-      from: null,
-      to: null,
-      on: null,
-      last: null,
-      journal: 'personal',
-    }
+    filterParams = { journal: 'personal' };
   });
 
   describe('When the journal contains more entries than requested', () => {

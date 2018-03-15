@@ -10,13 +10,7 @@ describe('The FromFilter', () => {
   let filterParams: FilterParams = null;
 
   before(() => {
-    filterParams = {
-      from: null,
-      to: null,
-      on: null,
-      last: null,
-      journal: 'personal'
-    }
+    filterParams = { journal: 'personal' };
   });
 
   const testEntries: Entry[] = [
