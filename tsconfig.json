@@ -6,6 +6,8 @@
         "module": "commonjs",
         "moduleResolution": "node",
         "experimentalDecorators": true,
-        "emitDecoratorMetadata": true
+        "emitDecoratorMetadata": true,
+        "outDir": "dist",
+        "sourceMap": true
     }
 }

@@ -44,7 +44,7 @@ abstract class BaseFilter {
       // Not found. The value of left will always point to the index
       // of the first item in the haystack that was bigger than the
       // needle      
-      if (left > right) return left;
+      if (left > right) return duplicateStrategy == DuplicateStrategy.checkRight ? left - 1 : left;
 
       let middle = Math.floor((left+right)/2);
       let entry = entries[middle];
@@ -100,6 +100,24 @@ abstract class BaseFilter {
   protected isDefined(value: any) : boolean {
     return value !== undefined && value !== null;
   }
+
+  protected setToEndOfDay(date: string) : string {
+    return moment(date)
+      .hour(23)
+      .minute(59)
+      .second(59)
+      .millisecond(999)
+      .format('LLLL');
+  }
+
+  protected setToStartOfDay(date: string) : string {
+    return moment(date)
+      .hour(0)
+      .minute(0)
+      .second(0)
+      .millisecond(0)
+      .format('LLLL');
+  }
 }
 
 /**
@@ -149,8 +167,15 @@ export class RangeFilter extends BaseFilter implements Filter {
    * @returns The filtered entries
    */
   execute(entries: Entry[], filterParams: FilterParams) : FilterResult[] {
-    const startIndex = this.findFirstOnOrAfterDate(entries, filterParams.from, DuplicateStrategy.checkLeft);
-    let endIndex = this.findFirstOnOrAfterDate(entries, filterParams.to, DuplicateStrategy.checkRight);
+    const startIndex = this.findFirstOnOrAfterDate(
+      entries, 
+      this.setToStartOfDay(filterParams.from), 
+      DuplicateStrategy.checkLeft);
+    
+    let endIndex = this.findFirstOnOrAfterDate(
+      entries, 
+      this.setToEndOfDay(filterParams.to), 
+      DuplicateStrategy.checkRight);
 
     if (startIndex >= 0 && endIndex === -1) {
       endIndex = entries.length-1;

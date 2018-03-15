@@ -1,8 +1,10 @@
 const gulp = require('gulp');
 const ts = require('gulp-typescript');
+const sourcemaps = require('gulp-sourcemaps');
 
 gulp.task('default', () => {
     return gulp.src('src/**/*.ts')
+        .pipe(sourcemaps.init())
         .pipe(ts({
             'lib': ['ES2017'],
             'target': 'es5',
@@ -10,8 +12,10 @@ gulp.task('default', () => {
             'module': 'commonjs',
             'moduleResolution': 'node',
             'experimentalDecorators': true,
-            'emitDecoratorMetadata': true
+            'emitDecoratorMetadata': true,
+            'sourceMap': true
         }))
+        .pipe(sourcemaps.write())
         .pipe(gulp.dest('dist'));
 });
 
