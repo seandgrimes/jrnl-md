@@ -1,0 +1,19 @@
+# For Visual Studio Code, you'll need the EditorConfig for VS Code extension installed
+# for the editor to honor it. See http://editorconfig.org for more information about
+# support in other editors
+
+# Don't look any higher for other EditorConfig files 
+root = true
+
+# Make sure that we maintain Unix-style line endings, sorry Windows users
+[*]
+end_of_line = lf
+insert_final_newline = true
+
+# Settings for the files that we'll commonly be editing as part of this
+# project
+[*.{js,ts,json}]
+charset = utf-8
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
