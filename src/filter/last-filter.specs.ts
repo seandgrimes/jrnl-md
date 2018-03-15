@@ -9,14 +9,14 @@ import {StorageService} from '../storage/storage-service';
 describe('The LastFilter', () => {
 
   const testEntries: Entry[] = [
-    { date: '2018-02-28 12:00 PM', body: 'Entry 1' },
-    { date: '2018-02-28 01:00 PM', body: 'Entry 2' },
-    { date: '2018-02-28 02:00 PM', body: 'Entry 3' },
-    { date: '2018-02-28 03:00 PM', body: 'Entry 4' },
-    { date: '2018-02-28 04:00 PM', body: 'Entry 5' }
+    { date: '2018-02-28T12:00Z', body: 'Entry 1' },
+    { date: '2018-02-28T13:00Z', body: 'Entry 2' },
+    { date: '2018-02-28T14:00Z', body: 'Entry 3' },
+    { date: '2018-02-28T15:00Z', body: 'Entry 4' },
+    { date: '2018-02-28T16:00Z', body: 'Entry 5' }
   ];
-  
-  let filterParams : FilterParams = null; 
+
+  let filterParams : FilterParams = null;
 
   before(() => {
     filterParams = {

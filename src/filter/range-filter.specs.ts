@@ -24,10 +24,10 @@ describe('The RangeFilter', () => {
     it('when there are multiple entries on the end date', () => {
       // Arrange
       const testEntries: Entry[] = [
-        { date: '2018-02-18 12:00 PM', body: 'Entry 1' },
-        { date: '2018-02-21 01:00 PM', body: 'Entry 2' },
-        { date: '2018-02-21 02:00 PM', body: 'Entry 3' },
-        { date: '2018-02-24 02:00 PM', body: 'Entry 4' }
+        { date: '2018-02-18T12:00Z', body: 'Entry 1' },
+        { date: '2018-02-21T13:00Z', body: 'Entry 2' },
+        { date: '2018-02-21T14:00Z', body: 'Entry 3' },
+        { date: '2018-02-24T14:00Z', body: 'Entry 4' }
       ];
 
       filterParams.from = '2018-02-18';
@@ -38,7 +38,7 @@ describe('The RangeFilter', () => {
 
       // Act
       var results = sut.execute(testEntries, filterParams).map(fr => fr.entry);
-      
+
       // Assert
       expect(results).to.deep.equal(expected);
     });
@@ -46,10 +46,10 @@ describe('The RangeFilter', () => {
     it('when there are multiple entries on the start date', () => {
       // Arrange
       const testEntries: Entry[] = [
-        { date: '2018-02-18 12:00 PM', body: 'Entry 1' },
-        { date: '2018-02-18 01:00 PM', body: 'Entry 2' },
-        { date: '2018-02-21 01:00 PM', body: 'Entry 3' },
-        { date: '2018-02-24 02:00 PM', body: 'Entry 4' }
+        { date: '2018-02-18T12:00Z', body: 'Entry 1' },
+        { date: '2018-02-18T13:00Z', body: 'Entry 2' },
+        { date: '2018-02-21T13:00Z', body: 'Entry 3' },
+        { date: '2018-02-24T24:00Z', body: 'Entry 4' }
       ];
 
       filterParams.from = '2018-02-18';
@@ -60,7 +60,7 @@ describe('The RangeFilter', () => {
 
       // Act
       var results = sut.execute(testEntries, filterParams).map(fr => fr.entry);
-      
+
       // Assert
       expect(results).to.deep.equal(expected);
     });
@@ -68,12 +68,12 @@ describe('The RangeFilter', () => {
     it('when there are multiple entries on the start date and the start date is in the middle of the list', () => {
       // Arrange
       const testEntries: Entry[] = [
-        { date: '2018-02-18 12:00 PM', body: 'Entry 1' },
-        { date: '2018-02-18 01:00 PM', body: 'Entry 2' },
-        { date: '2018-02-21 01:00 PM', body: 'Entry 3' },
-        { date: '2018-02-21 02:00 PM', body: 'Entry 4' },
-        { date: '2018-02-25 01:00 PM', body: 'Entry 5' },
-        { date: '2018-02-26 12:00 PM', body: 'Entry 6' }
+        { date: '2018-02-18T12:00Z', body: 'Entry 1' },
+        { date: '2018-02-18T13:00Z', body: 'Entry 2' },
+        { date: '2018-02-21T13:00Z', body: 'Entry 3' },
+        { date: '2018-02-21T14:00Z', body: 'Entry 4' },
+        { date: '2018-02-25T13:00Z', body: 'Entry 5' },
+        { date: '2018-02-26T12:00Z', body: 'Entry 6' }
       ];
 
       filterParams.from = '2018-02-21';
@@ -84,7 +84,7 @@ describe('The RangeFilter', () => {
 
       // Act
       var results = sut.execute(testEntries, filterParams).map(fr => fr.entry);
-      
+
       // Assert
       expect(results).to.deep.equal(expected);
     });
