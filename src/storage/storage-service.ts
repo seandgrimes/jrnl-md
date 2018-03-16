@@ -2,8 +2,9 @@ import {Entry} from './entry';
 import {injectable} from 'inversify';
 import * as path from 'path';
 import * as fs from 'fs';
+import { Journal } from './journal';
 
-/** 
+/**
  * Storage service used for writing and retrieving
  * the data file that contains the journal entries
 */
@@ -22,24 +23,9 @@ export class StorageService {
    * @param filename The name of the file to save the entries to
    * @returns A promise containing the loaded entries
    */
-  loadEntries(filename: string) : Promise<Entry[]> {
-    return new Promise<Entry[]>((resolve, reject) => {
-      const filePath = path.join(this.basePath, filename);
-      fs.readFile(filePath, 'utf8', (err, data) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-
-        try {
-          var json = JSON.parse(data) as Entry[];
-          resolve(json); 
-        }
-        catch (ex) {
-          reject(ex);
-        }
-      });
-    });
+  loadJournal(filename: string) : Promise<Journal> {
+    const filepath = path.join(this.basePath, filename);
+    return Journal.load(filepath);
   }
 
   /**

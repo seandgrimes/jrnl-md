@@ -6,6 +6,11 @@ export class TreeNode {
   keys: string[] = [];
   value: Entry;
 
+  get children() : TreeNode[] {
+    // TODO: Use a generator
+    return this.keys.map(key => this.index.get(key));
+  }
+
   constructor(key: string, value: Entry) {
     this.key = key;
     this.value = value;
@@ -29,7 +34,7 @@ export class TreeNode {
     return child;
   }
 
-  findChild(key: string) {
-    return this.index[key] || null;
+  findChild(key: string) : TreeNode {
+    return this.index.get(key) || null;
   }
 }

@@ -3,11 +3,15 @@ import {TreeNode} from './tree-node';
 import * as fs from 'fs';
 import * as moment from 'moment';
 
+export interface SearchFunc<TReturnType> {
+  (database: TreeNode) : TReturnType[];
+}
+
 export class Journal {
   private filename: string;
   private database: TreeNode;
 
-  private constructor(database: TreeNode, filename: string) {
+  constructor(database: TreeNode, filename: string) {
     this.filename = filename;
     this.database = database;
   }
@@ -15,15 +19,19 @@ export class Journal {
   addEntry(entry: Entry) {
     let entryDate = moment(entry.date);
     const year = entryDate.year().toString();
-    const month = entryDate.month().toString();
-    const day = entryDate.day().toString();
+    const month = (entryDate.month()+1).toString(); // Months are 0 indexed
+    const day = entryDate.date().toString();
 
     let yearNode = this.database.createChildUnlessExists(year);
-    let monthNode = this.database.createChildUnlessExists(month);
-    let dayNode = this.database.createChildUnlessExists(day);
+    let monthNode = yearNode.createChildUnlessExists(month);
+    let dayNode = monthNode.createChildUnlessExists(day);
 
     let key = entryDate.toISOString();
     dayNode.addChild(new TreeNode(key, entry));
+  }
+
+  find<TFindType>(searchFunc: SearchFunc<TFindType>) : TFindType[] {
+    return searchFunc(this.database);
   }
 
   static load(filename: string) : Promise<Journal> {

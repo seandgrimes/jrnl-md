@@ -3,8 +3,10 @@ import {expect} from 'chai';
 import {Entry} from '../storage/entry';
 import {FilterParams} from '../filter/filter-params';
 import {FilterService} from '../filter/filter-service';
-import {LastFilter, FilterResult} from '../filter/filters';
+import {LastFilter} from '../filter/filters';
 import {StorageService} from '../storage/storage-service';
+import { Journal } from '../storage/journal';
+import { TreeNode } from '../storage/tree-node';
 
 describe('The LastFilter', () => {
 
@@ -17,9 +19,12 @@ describe('The LastFilter', () => {
   ];
 
   let filterParams : FilterParams = null;
+  let journal : Journal = null;
 
   before(() => {
     filterParams = { journal: 'personal' };
+    journal = new Journal(new TreeNode(null, null), "blah.json");
+    testEntries.forEach(journal.addEntry.bind(journal));
   });
 
   describe('When the journal contains more entries than requested', () => {
@@ -30,24 +35,7 @@ describe('The LastFilter', () => {
       const sut = new LastFilter();
 
       // Act
-      const results = sut.execute(testEntries, filterParams).map(fr => fr.entry);
-
-      // Assert
-      expect(results).to.deep.equal(expected);
-    });
-
-    it('then the position of each returned journal entry matches the original list', () => {
-      // Arrange
-      filterParams.last = 3;
-      const sut = new LastFilter();
-      const expected : FilterResult[] = [
-        { position: 2, entry: testEntries[2] },
-        { position: 3, entry: testEntries[3] },
-        { position: 4, entry: testEntries[4] }
-      ];
-
-      // Act
-      const results = sut.execute(testEntries, filterParams);
+      const results = sut.execute(journal, filterParams);
 
       // Assert
       expect(results).to.deep.equal(expected);
@@ -61,54 +49,39 @@ describe('The LastFilter', () => {
       const sut = new LastFilter();
 
       // Act
-      const results = sut.execute(testEntries, filterParams).map(fr => fr.entry);
+      const results = sut.execute(journal, filterParams);
 
       // Assert
       expect(results).to.deep.equal(testEntries);
-    });
-
-    it('then the position of each returned journal entry matches the original list', () => {
-      // Arrange
-      filterParams.last = testEntries.length+3;
-      const sut = new LastFilter();
-      const expected = testEntries.map((value, idx) => {
-        return { position: idx, entry: value}
-      });
-
-      // Act
-      const results = sut.execute(testEntries, filterParams);
-
-      // Assert
-      expect(results).to.deep.equal(expected);
     });
   });
 
   describe('When the journal contains the same number of entries as requested', () => {
     it('then the filter returns the correct journal entries', () => {
       // Arrange
-      filterParams.last = testEntries.length+3;
+      filterParams.last = testEntries.length;
       const sut = new LastFilter();
 
       // Act
-      const results = sut.execute(testEntries, filterParams).map(fr => fr.entry);
+      const results = sut.execute(journal, filterParams);
 
       // Assert
       expect(results).to.deep.equal(testEntries);
     });
+  });
 
-    it('then the position of each returned journal entry matches the original list', () => {
-      // Arrange
-      filterParams.last = testEntries.length+3;
-      const sut = new LastFilter();
-      const expected = testEntries.map((value, idx) => {
-        return { position: idx, entry: value}
-      });
+  it('should return the original journal entries', () => {
+    // Arrange
+    filterParams.last = testEntries.length;
+    const sut = new LastFilter();
 
-      // Act
-      const results = sut.execute(testEntries, filterParams);
+    // Act
+    const results = sut.execute(journal, filterParams);
 
-      // Assert
-      expect(results).to.deep.equal(expected);
+    // Assert
+    expect(results.length).to.be.greaterThan(0);
+    results.forEach((actual, index) => {
+      expect(actual).to.equal(testEntries[index]);
     });
   });
 });

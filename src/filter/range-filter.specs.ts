@@ -3,8 +3,10 @@ import {expect} from 'chai';
 import {Entry} from '../storage/entry';
 import {FilterParams} from '../filter/filter-params';
 import {FilterService} from '../filter/filter-service';
-import {RangeFilter, FilterResult} from '../filter/filters';
+import {RangeFilter} from '../filter/filters';
 import {StorageService} from '../storage/storage-service';
+import { Journal } from '../storage/journal';
+import { TreeNode } from '../storage/tree-node';
 
 describe('The RangeFilter', () => {
   let filterParams: FilterParams = null;
@@ -12,6 +14,12 @@ describe('The RangeFilter', () => {
   before(() => {
     filterParams = { journal: 'personal' };
   });
+
+  const buildJournal = (entries: Entry[]) : Journal => {
+    const journal = new Journal(new TreeNode(null, null), "bogus.json");
+    entries.forEach(journal.addEntry.bind(journal));
+    return journal;
+  }
 
   describe('Should return the correct results', () => {
 
@@ -31,7 +39,7 @@ describe('The RangeFilter', () => {
       const expected = testEntries.slice(0, 3);
 
       // Act
-      var results = sut.execute(testEntries, filterParams).map(fr => fr.entry);
+      const results = sut.execute(buildJournal(testEntries), filterParams);
 
       // Assert
       expect(results).to.deep.equal(expected);
@@ -53,7 +61,7 @@ describe('The RangeFilter', () => {
       const expected = testEntries.slice(0, 3);
 
       // Act
-      var results = sut.execute(testEntries, filterParams).map(fr => fr.entry);
+      const results = sut.execute(buildJournal(testEntries), filterParams);
 
       // Assert
       expect(results).to.deep.equal(expected);
@@ -77,7 +85,7 @@ describe('The RangeFilter', () => {
       const expected = testEntries.slice(2, 5);
 
       // Act
-      var results = sut.execute(testEntries, filterParams).map(fr => fr.entry);
+      const results = sut.execute(buildJournal(testEntries), filterParams);
 
       // Assert
       expect(results).to.deep.equal(expected);

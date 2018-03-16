@@ -2,8 +2,10 @@ import 'reflect-metadata';
 import {injectable} from 'inversify';
 import {Entry} from '../storage/entry';
 import {FilterParams} from './filter-params';
-import {FilterResult, RangeFilter, LastFilter, FromFilter, Filter, OnFilter} from './filters';
+import {RangeFilter, LastFilter, FromFilter, Filter, OnFilter} from './filters';
 import * as moment from 'moment';
+import { Journal } from '../storage/journal';
+import {flattenArray} from '../util/arrays';
 
 /**
  * Service used to filter journal entries based off the filter criteria
@@ -20,7 +22,7 @@ export class FilterService {
    *
    * @returns The entries that matched the filter
    */
-  filter(entries: Entry[], filter: FilterParams) : FilterResult[] {
+  filter(journal: Journal, filterParams: FilterParams) : Entry[] {
     const filters: Filter[] = [
       new RangeFilter(),
       new LastFilter(),
@@ -28,20 +30,20 @@ export class FilterService {
       new OnFilter()
     ];
 
-    const toFilterResult = (value: Entry, idx: number) : FilterResult => {
-      return { position: idx, entry: value }
-    }
-
-    let filterResults: FilterResult[] = [];
+    /*let filterResults: FilterResult[] = [];
     const matchedFilters = filters.filter(f => f.shouldExecute(filter));
 
     matchedFilters.forEach(match => {
-      const filtered = match.execute(entries, filter);
+      const filtered = match.execute(journal, filter);
       filterResults.push(...filtered);
     });
 
     return matchedFilters.length > 0
       ? filterResults
-      : entries.map<FilterResult>(toFilterResult)
+      : []; // Need to be able to show all*/
+
+    return filters.filter(filter => filter.shouldExecute(filterParams))
+      .map(filter => filter.execute(journal, filterParams))
+      .reduce(flattenArray, []);
   }
 }
