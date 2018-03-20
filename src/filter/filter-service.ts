@@ -30,18 +30,6 @@ export class FilterService {
       new OnFilter()
     ];
 
-    /*let filterResults: FilterResult[] = [];
-    const matchedFilters = filters.filter(f => f.shouldExecute(filter));
-
-    matchedFilters.forEach(match => {
-      const filtered = match.execute(journal, filter);
-      filterResults.push(...filtered);
-    });
-
-    return matchedFilters.length > 0
-      ? filterResults
-      : []; // Need to be able to show all*/
-
     return filters.filter(filter => filter.shouldExecute(filterParams))
       .map(filter => filter.execute(journal, filterParams))
       .reduce(flattenArray, []);
