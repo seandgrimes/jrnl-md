@@ -9,7 +9,6 @@ import {EditorService} from './editor/editor-service';
 import {Entry} from './storage/entry';
 import {FilterParams} from './filter/filter-params';
 import {FilterService} from './filter/filter-service';
-import {StorageService} from './storage/storage-service';
 import { Journal } from './storage/journal';
 
 /**
@@ -26,37 +25,28 @@ export class Application {
    *
    * @param editorService The EditorService implementation to use
    * @param filterService The FilterService implementation to use
-   * @param storageService The StorageService implementation to use
   */
   constructor(
       private editorService:EditorService,
-      private filterService:FilterService,
-      private storageService:StorageService) {
+      private filterService:FilterService) {
 
     this.appDir = path.join(os.homedir(), '.jrnl-md');
-    this.storageService = new StorageService(this.appDir);
     this.initialize();
   }
 
   /**
    * Create a new journal entry using the user's default
    * editor and then save the newly created journal entry
-   * to the specified filename.
+   * to the journal file.
    *
-   * @param filename The filename to save the entries to
+   * @param journalName The name of the journal to create an entry for
    */
-  async createJournalEntry(filename: string) {
+  async createJournalEntry(journalName: string) {
     let journal: Journal = null;
-
-    if (!filename.endsWith('.json')) {
-      filename = filename + '.json';
-    }
+    const journalPath = this.getFileName(journalName);
 
     try {
-      const journalPath = path.join(this.appDir, filename);
-      if (fs.existsSync(journalPath)) {
-        journal = await this.storageService.loadJournal(filename);
-      }
+      journal = await Journal.load(journalPath);
     } catch (ex) {
       console.log(`Error opening journal file: ${ex}`);
       console.log(ex.stack);
@@ -66,7 +56,7 @@ export class Application {
       const newEntry = await this.editorService.createJournalEntry();
       if (newEntry) {
         journal.addEntry(newEntry);
-        //await this.storageService.saveEntries(filename, journals);
+        await journal.save();
       }
     }
     catch (ex) {
@@ -83,15 +73,15 @@ export class Application {
    */
   async editJournalEntries(filter: FilterParams) {
     let filename = this.getFileName(filter.journal);
-    let journal = await this.storageService.loadJournal(filename);
+    let journal = await Journal.load(filename);
     let filtered = this.filterService.filter(journal, filter);
 
     for (var entry of filtered) {
-      //const updated = await this.editorService.editJournalEntry(entry.entry);
-      //entries[entry.position] = updated;
+      const updated = await this.editorService.editJournalEntry(entry);
+      Object.assign(entry, updated);
     }
 
-    //await this.storageService.saveEntries(filename, entries);
+    await journal.save();
   }
 
   /**
@@ -101,9 +91,11 @@ export class Application {
    * @returns The filename of the journal
    */
   private getFileName(journal: string) : string {
-    return !journal.endsWith('.json')
+    journal = !journal.endsWith('.json')
       ? journal + '.json'
       : journal;
+
+    return path.join(this.appDir, journal);
   }
 
   /**
@@ -129,7 +121,7 @@ export class Application {
    */
   async showJournalEntries(filter: FilterParams) {
     let filename = this.getFileName(filter.journal);
-    let journal = await this.storageService.loadJournal(filename);
+    let journal = await Journal.load(filename);
     let filtered = this.filterService.filter(journal, filter);
     filtered.forEach(entry => console.log(marked(entry.body.trim())));
   }

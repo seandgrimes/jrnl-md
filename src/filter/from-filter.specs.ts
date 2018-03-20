@@ -4,7 +4,6 @@ import {Entry} from '../storage/entry';
 import {FilterParams} from '../filter/filter-params';
 import {FilterService} from '../filter/filter-service';
 import {FromFilter} from '../filter/filters';
-import {StorageService} from '../storage/storage-service';
 import { Journal } from '../storage/journal';
 import { TreeNode } from '../storage/tree-node';
 

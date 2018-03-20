@@ -5,7 +5,6 @@ import {FilterParams} from '../filter/filter-params';
 import {FilterService} from '../filter/filter-service';
 import {OnFilter} from '../filter/filters';
 import {Journal} from '../storage/journal';
-import {StorageService} from '../storage/storage-service';
 import {TreeNode} from '../storage/tree-node';
 
 describe('The OnFilter', () => {
