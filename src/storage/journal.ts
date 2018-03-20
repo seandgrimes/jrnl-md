@@ -35,6 +35,9 @@ export class Journal {
   }
 
   static load(filename: string) : Promise<Journal> {
+    if (!fs.existsSync(filename))
+      return Promise.resolve(new Journal(new TreeNode(), filename));
+
     return new Promise<Journal>((resolve, reject) => {
       fs.readFile(filename, 'utf8', (err, data) => {
         if (err) {
@@ -43,9 +46,10 @@ export class Journal {
         }
 
         try {
-          let database = JSON.parse(data) as TreeNode;
+          let database = TreeNode.fromJson(data);
           resolve(new Journal(database, filename));
         } catch (ex) {
+          console.log(ex);
           reject(ex);
         }
       });
@@ -54,7 +58,8 @@ export class Journal {
 
   save() : Promise<void> {
     return new Promise((resolve, reject) => {
-      fs.writeFile(this.filename, JSON.stringify(this.database), 'utf8', err => {
+      const json = JSON.stringify(this.database);
+      fs.writeFile(this.filename, json, 'utf8', err => {
         if (err) {
           reject(err);
           return;
