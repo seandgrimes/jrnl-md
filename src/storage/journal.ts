@@ -56,6 +56,26 @@ export class Journal {
     });
   }
 
+  * listAll() : IterableIterator<Entry> {
+    // Need to do an in-order traversal
+    const queue : TreeNode[] = [this.database];
+
+    while (queue.length > 0) {
+      const node = queue.shift();
+
+      // Only leaf-nodes should have a journal entry
+      // associated with them
+      if (node.value !== null) {
+        yield node.value;
+        continue;
+      }
+
+      // Keys should already be in order, so this will always
+      // result in an in-order traversal
+      node.keys.forEach(key => queue.push(node.findChild(key)));
+    }
+  }
+
   save() : Promise<void> {
     return new Promise((resolve, reject) => {
       const json = JSON.stringify(this.database);

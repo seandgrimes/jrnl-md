@@ -122,7 +122,19 @@ export class Application {
   async showJournalEntries(filter: FilterParams) {
     let filename = this.getFileName(filter.journal);
     let journal = await Journal.load(filename);
-    let filtered = this.filterService.filter(journal, filter);
-    filtered.forEach(entry => console.log(marked(entry.body.trim())));
+
+    // Non-empty filter
+    const nonEmptyKeys = ['from', 'to', 'on', 'last'];
+    if (nonEmptyKeys.some(key => filter[key])) {
+      console.log("Non-empty filter!");
+      let filtered = this.filterService.filter(journal, filter);
+      filtered.forEach(entry => console.log(marked(entry.body.trim())));
+      return;
+    }
+
+    for (const entry of journal.listAll()) {
+      const rendered = marked(entry.body.trim());
+      console.log(rendered);
+    }
   }
 }
