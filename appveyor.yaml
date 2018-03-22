@@ -7,7 +7,7 @@ install:
 test_script:
 - npm run test
 
-build: "off"
+build: off
 
 build_script:
 - gulp
