@@ -14,6 +14,20 @@
             "args": ["${workspaceRoot}/dist/**/*.specs.js"],
             "cwd": "${workspaceRoot}",
             "outFiles": ["${workspaceRoot}/dist/**/*.js"]
-        }
+        },
+
+        {
+          "type": "node",
+          "request": "launch",
+          "name": "Create new entry",
+          "preLaunchTask": "tsc: build - tsconfig.json",
+          "program": "${workspaceRoot}/dist/index.js",
+          "args": ["create", "test"],
+          "cwd": "${workspaceRoot}",
+          "outFiles": ["${workspaceRoot}/dist/**/*.js"],
+          "env": {
+            "EDITOR": "code -n -w"
+          }
+      }
     ]
 }

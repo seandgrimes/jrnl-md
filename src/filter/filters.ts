@@ -1,6 +1,9 @@
 import * as moment from 'moment';
 import {Entry} from '../storage/entry';
 import {FilterParams} from '../filter/filter-params';
+import {Journal, SearchFunc} from '../storage/journal';
+import {TreeNode} from '../storage/tree-node';
+import { flattenArray } from '../util/arrays';
 
 /**
  * The strategy to use to find the real starting index
@@ -14,84 +17,6 @@ export enum DuplicateStrategy {
 
 abstract class BaseFilter {
   /**
-   * Performs a modified binary search to find the index of the first entry
-   * that occurred on or after the date passed to the method. If the date
-   * supplied occurs before the date of all the journal entries, then the method
-   * will return 0. If the date supplied occurs after the date of all the journal
-   * entries, then -1 will be returned to signify there are no matches. Otherwise
-   * the index of the first journal entry whose date is an exact match or the index
-   * of the first journal whose date occurs after the supplied date will be returned.
-   *
-   * @param entries The entries to search
-   * @param date The date to use when finding journal entries that were created on or after that date
-   * @param duplicateStrategy The strategy to use when finding the correct index when duplicates exist
-   *
-   * @returns The index of the first match, or -1 if a match couldn't be found
-   */
-  protected findFirstOnOrAfterDate(entries: Entry[], date: string, duplicateStrategy: DuplicateStrategy) : number {
-    let left = 0;
-    let right = entries.length-1;
-
-    while (true) {
-      // Not found. Needle is greater than everything in the haystack
-      // so need to exclude everything
-      if (left > right && left >= entries.length) return -1;
-
-      // Not found. Needle is smaller than everything in the haystack
-      // so need to include everything
-      if (left > right && right < 0) return 0;
-
-      // Not found. The value of left will always point to the index
-      // of the first item in the haystack that was bigger than the
-      // needle
-      if (left > right) return duplicateStrategy == DuplicateStrategy.checkRight ? left - 1 : left;
-
-      let middle = Math.floor((left+right)/2);
-      let entry = entries[middle];
-
-      if (moment(entry.date).isBefore(date)) {
-        left = middle + 1;
-        continue;
-      }
-
-      if (moment(entry.date).isAfter(date)) {
-        right = middle - 1;
-        continue;
-      }
-
-      if (moment(entry.date).isSame(date)) {
-        middle = this.handleDuplicateMatches(entries, middle, duplicateStrategy);
-        return middle;
-      }
-    }
-  }
-
-  /**
-   * It's possible that we have multiple journal entries with the same date, so we need
-   * to find the index of the duplicate that is furthest right or left of the found item,
-   * depending on the use case
-   *
-   * @param entries The entries array containing the found item
-   * @param foundIndex The index of the item that was found by our binary search algorithm
-   * @param duplicateStrategy Whether to search left or right for duplicates
-   */
-  private handleDuplicateMatches(entries: Entry[], foundIndex: number, duplicateStrategy: DuplicateStrategy) : number {
-    const incrementer = duplicateStrategy === DuplicateStrategy.checkRight ? 1 : - 1;
-    let startOn = duplicateStrategy === DuplicateStrategy.checkRight ? foundIndex + 1 : foundIndex - 1;
-    const stopOn = duplicateStrategy === DuplicateStrategy.checkRight ? entries.length : -1;
-    const foundCreatedOn = moment(entries[foundIndex].date);
-
-    let lastIndex = foundIndex;
-    while (startOn != stopOn) {
-      const currentDate = entries[startOn].date;
-      if (!foundCreatedOn.isSame(currentDate)) return lastIndex;
-
-      lastIndex = startOn;
-      startOn += incrementer;
-    }
-  }
-
-  /**
    * Check if a value is null or undefined
    *
    * @param value The value to check if defined
@@ -100,41 +25,6 @@ abstract class BaseFilter {
   protected isDefined(value: any) : boolean {
     return value !== undefined && value !== null;
   }
-
-  protected setToEndOfDay(date: string) : string {
-    return moment(date)
-      .hour(23)
-      .minute(59)
-      .second(59)
-      .millisecond(999)
-      .toISOString();
-  }
-
-  protected setToStartOfDay(date: string) : string {
-    return moment(date)
-      .hour(0)
-      .minute(0)
-      .second(0)
-      .millisecond(0)
-      .toISOString();
-  }
-}
-
-/**
- * Contains an entry that was found as part of applying a filter
- * to an array
- */
-export interface FilterResult {
-  /**
-   * The position of the entry within the original array, should make it easy
-   * to replace the original with the #entry property if necessary
-   */
-  position: number,
-
-  /**
-   * The entry that was matched by the filter
-   */
-  entry: Entry
 }
 
 /**
@@ -147,7 +37,7 @@ export interface Filter {
    * @param entries The journal entries to filter
    * @param filterParams The filter parameters to use
    */
-  execute(entries: Entry[], filterParams: FilterParams) : FilterResult[];
+  execute(journal: Journal, filterParams: FilterParams) : Entry[];
   shouldExecute(filterParams: FilterParams) : boolean;
 }
 
@@ -166,27 +56,56 @@ export class RangeFilter extends BaseFilter implements Filter {
    *
    * @returns The filtered entries
    */
-  execute(entries: Entry[], filterParams: FilterParams) : FilterResult[] {
-    const startIndex = this.findFirstOnOrAfterDate(
-      entries,
-      this.setToStartOfDay(filterParams.from),
-      DuplicateStrategy.checkLeft);
+  execute(journal: Journal, filterParams: FilterParams) : Entry[] {
+    const startDate = moment(filterParams.from);
+    const endDate = moment(filterParams.to);
 
-    let endIndex = this.findFirstOnOrAfterDate(
-      entries,
-      this.setToEndOfDay(filterParams.to),
-      DuplicateStrategy.checkRight);
+    const startYear = startDate.year().toString();
+    const startMonth = (startDate.month()+1).toString();
+    const startDay = startDate.date().toString();
 
-    if (startIndex >= 0 && endIndex === -1) {
-      endIndex = entries.length-1;
-    }
+    const endYear = endDate.year().toString();
+    const endMonth = (endDate.month()+1).toString();
+    const endDay = endDate.date().toString();
 
-    const filtered = entries.slice(startIndex, endIndex+1);
-    return filtered.map((value, index) => {
-      return {
-        position: index + startIndex,
-        entry: value
-      }
+        // Need to find everything that starts on the start date, if anything
+    // After that, just need to keep doing in order traversal until I reach the end date in the range
+
+    return journal.find(database => {
+      const entries: Entry[] = [];
+      const years = database.keys.filter(year => year >= startYear && year <= endYear)
+        .map(year => database.findChild(year));
+
+      years.forEach(year => {
+        const beginningMonth = year.key === startYear
+          ? startMonth
+          : "1";
+
+        const endingMonth = year.key === endYear
+          ? endMonth
+          : "12";
+
+        const months = year.keys.filter(month => month >= beginningMonth && month <= endingMonth)
+          .map(month => year.findChild(month));
+
+        months.forEach(month => {
+          const beginningDay = year.key === startYear && month.key === startMonth
+            ? startDay
+            : "1"; // Start of the month, smallest key we can have
+
+          const endingDay = year.key === endYear && month.key === endMonth
+            ? endDay
+            : "31"; // End of the longest month, largest key we can have
+
+          month.keys.filter(day => day >= beginningDay && day <= endingDay)
+            .map(day => month.findChild(day).children)
+            .reduce(flattenArray, [])
+            .map(entry => entry.value)
+            .forEach(entry => entries.push(entry));
+        });
+      });
+
+      return entries;
     });
   }
 
@@ -215,21 +134,54 @@ export class FromFilter extends BaseFilter implements Filter {
    * @param entries The entries to filter
    * @param startDate The date that entries were created on or after
    */
-  public execute(entries: Entry[], filterParams: FilterParams) : FilterResult[] {
-    const startIndex = this.findFirstOnOrAfterDate(entries, filterParams.from, DuplicateStrategy.checkLeft);
+  public execute(journal: Journal, filterParams: FilterParams) : Entry[] {
+    return journal.find(database => {
+      const entries: Entry[] = [];
 
-    // No entries found
-    if (startIndex === -1) return [];
+      const fromDate = moment(filterParams.from);
+      const year = fromDate.year().toString();
+      const month = (fromDate.month()+1).toString();
+      const day = fromDate.date().toString();
 
-    const filtered = entries.slice(startIndex)
-      .map((value, idx) => {
-        return {
-          position: idx + startIndex,
-          entry: value
-        }
-      });
+      this.processMatchingYear(year, month, day, database, entries);
 
-    return filtered;
+      const reducer = (accumulator: TreeNode[], currentValue: TreeNode) => {
+        accumulator.push(...currentValue.children);
+        return accumulator;
+      }
+
+      var matching = database.keys.filter(key => key > year)
+        .map(yearKey => database.findChild(yearKey))
+        .reduce(reducer, []) // Gives us the months for each year
+        .reduce(reducer, []) // Gives us the days for each month
+        .reduce(reducer, []) // Gives us the entries for each day
+        .forEach(entry => entries.push(entry.value));
+
+      return entries;
+    });
+  }
+
+  private processMatchingYear(year: string, month: string, day: string, database: TreeNode, entries: Entry[]) {
+    const yearNode = database.findChild(year);
+    if (yearNode == null) return;
+
+    const reducer = (accumulator: TreeNode[], currentValue: TreeNode) => {
+      accumulator.push(...currentValue.children);
+      return accumulator;
+    }
+
+    const currentMonth = yearNode.findChild(month);
+    if (currentMonth !== null) {
+      const matching = currentMonth.keys.filter(key => key >= day)
+        .map(key => currentMonth.findChild(key))
+        .reduce(reducer, [])
+        .forEach(entry => entries.push(entry.value));
+    }
+
+    yearNode.keys.filter(key => key > month)
+      .map(key => currentMonth.findChild(key))
+      .reduce(reducer, [])
+      .forEach(entry => entries.push(entry.value));
   }
 
   /**
@@ -257,25 +209,46 @@ export class LastFilter extends BaseFilter implements Filter {
    *
    * @returns The last n elements of the entries array
    */
-  public execute(entries: Entry[], filterParams: FilterParams) : FilterResult[] {
-    const last = entries.length > filterParams.last
-      ? entries.slice(-1*filterParams.last)
-      : entries;
+  public execute(journal: Journal, filterParams: FilterParams) : Entry[] {
+    const entries: Entry[] = [];
 
-    const calculatePosition = (idx: number) => {
-      return entries.length > filterParams.last
-        ? entries.length - filterParams.last + idx
-        : idx;
-    }
+    const iterateDays = (month: TreeNode) => {
+      const days = [...month.keys].reverse();
+      for (const dayKey of days) {
+        const day = month.findChild(dayKey);
+        const children = [...day.children].reverse()
+          .filter((value, index) => entries.length + index + 1 <= filterParams.last)
+          .map(node => node.value);
 
-    const filtered = last.map<FilterResult>((value, idx) => {
-      return {
-        position: calculatePosition(idx),
-        entry: value
+        entries.push(...children);
+
+        if (entries.length === filterParams.last) return true;
       }
-    });
+      return false;
+    };
 
-    return filtered;
+    const iterateMonths = (year: TreeNode) => {
+      const months = [...year.keys].reverse();
+      for (const monthKey of months) {
+        const month = year.findChild(monthKey);
+        const done = iterateDays(month);
+        if (done) return true;
+      }
+      return false;
+    };
+
+    const findEntries = (database) => {
+      const years = [...database.keys].reverse();
+      for (const yearKey of years) {
+        const year = database.findChild(yearKey);
+        const done = iterateMonths(year);
+        if (done) break;
+      }
+
+      return entries;
+    };
+
+    return journal.find(findEntries).reverse();
   }
 
   /**
@@ -287,5 +260,35 @@ export class LastFilter extends BaseFilter implements Filter {
    */
   public shouldExecute(filterParams: FilterParams) : boolean {
     return this.isDefined(filterParams.last);
+  }
+}
+
+export class OnFilter extends BaseFilter implements Filter {
+  public execute(journal: Journal, filterParams: FilterParams) : Entry[] {
+    return journal.find((database) => {
+      const from = moment(filterParams.on);
+
+      const year = database.findChild(from.year().toString());
+      if (year === null) return [];
+
+      const month = year.findChild((from.month() + 1).toString());
+      if (month === null) return [];
+
+      const day = month.findChild(from.date().toString());
+      return day !== null
+        ? day.children.map(entry => entry.value)
+        : [];
+    });
+  }
+
+  /**
+   * Whether or not the filter should be executed base off the
+   * supplied filter parameters
+   *
+   * @param filter The filter parameters to check
+   * @returns True if the filter should execute, false otherwise
+   */
+  public shouldExecute(filterParams: FilterParams) : boolean {
+    return this.isDefined(filterParams.on);
   }
 }
