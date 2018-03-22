@@ -1,5 +1,3 @@
-image: ubuntu
-
 install:
 - npm install
 - npm install -g gulp
