@@ -27,7 +27,7 @@
     "ts-mockito": "^2.3.0"
   },
   "scripts": {
-    "test": "node_modules/mocha/bin/_mocha dist/**/*.specs.js"
+    "test": "mocha dist/**/*.specs.js"
   },
   "repository": {
     "type": "git",

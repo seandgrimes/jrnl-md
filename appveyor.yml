@@ -1,0 +1,16 @@
+environment:
+  nodejs_version: "9.5.0"
+
+install:
+- npm install
+- npm install -g gulp
+- npm install -g mocha
+
+test_script:
+- npm run test
+
+build_script:
+- cmd: gulp
+
+cache:
+- node_modules
