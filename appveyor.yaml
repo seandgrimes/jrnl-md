@@ -1,0 +1,11 @@
+image: ubuntu
+
+install:
+- npm install
+- npm install -g gulp
+
+test_script:
+- npm run test
+
+build:
+- gulp
