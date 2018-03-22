@@ -7,7 +7,7 @@ gulp.task('default', () => {
         .pipe(sourcemaps.init())
         .pipe(ts({
             'lib': ['ES2017'],
-            'target': 'es5',
+            'target': 'es6',
             'types': ['reflect-metadata', 'node'],
             'module': 'commonjs',
             'moduleResolution': 'node',
