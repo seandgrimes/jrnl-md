@@ -8,4 +8,4 @@ install:
 test_script:
 - npm run test
 
-build: off
+build: "off"
