@@ -3,9 +3,9 @@ image: ubuntu
 install:
 - npm install
 - npm install -g gulp
+- gulp
 
 test_script:
 - npm run test
 
-build:
-- gulp
+build: off
