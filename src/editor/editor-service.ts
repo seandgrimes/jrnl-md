@@ -7,6 +7,7 @@ import {injectable} from 'inversify';
 import {spawn} from 'child_process';
 import {Entry} from '../storage/entry';
 import {TempFileParser} from './tempfile-parser';
+import { JournalTempFile } from './journal-temp-file';
 
 /**
  * Editor service for interacting with the user's
@@ -16,14 +17,12 @@ import {TempFileParser} from './tempfile-parser';
 @injectable()
 export class EditorService {
   private editor: string;
-  private tmpDir: string;
 
   /**
    * Constructor
   */
   constructor() {
     this.editor = process.env.EDITOR;
-    this.tmpDir = os.tmpdir();
   }
 
   /**
@@ -33,7 +32,7 @@ export class EditorService {
    * @returns A promise containing the new journal entry or null when it is resolved
   */
   createJournalEntry() : Promise<Entry> {
-    const tempFile = this.generateTempFile();
+    const tempFile = new JournalTempFile();
     const entry: Entry = {
       date: moment().format(),
       body: ''
@@ -49,18 +48,8 @@ export class EditorService {
    * @returns A promise containing the new journal entry or null when it is resolved
   */
   editJournalEntry(entry: Entry) : Promise<Entry> {
-    const tempFile = this.generateTempFile();
+    const tempFile = new JournalTempFile();
     return this.spawnEditor(tempFile, entry, false);
-  }
-
-  /**
-   * Generates a unique temp file name for use when creating
-   * or editing existing journal entries
-   *
-   * @returns A unique temp file name
-  */
-  private generateTempFile() : string {
-    return uniqueFilename(this.tmpDir) + '.md';
   }
 
   /**
@@ -71,14 +60,14 @@ export class EditorService {
    * @param isNewEntry Whether or not this is a new or existing entry
    * @returns A promise with the parsed Entry from the temp file
    */
-  private spawnEditor(tempFile: string, entry: Entry, isNewEntry: boolean) : Promise<Entry> {
+  private spawnEditor(tempFile: JournalTempFile, entry: Entry, isNewEntry: boolean) : Promise<Entry> {
     const openEditor = () => {
       const editorParts = this.editor.split(' ').filter(entry => entry.trim() !== '');
       const editorCmd = editorParts.shift();
       const args = editorParts || [];
 
       return new Promise<void>((resolve, reject) => {
-        args.push(tempFile);
+        args.push(tempFile.filename);
         const editor = spawn(editorCmd, args);
         editor.on('close', (code) => {
           code !== 0
@@ -88,43 +77,8 @@ export class EditorService {
       });
     }
 
-    const readTempFile = () => {
-      return new Promise<Entry>((resolve, reject) => {
-        fs.readFile(tempFile, 'utf8', (err, data) => {
-          if (!err) {
-            const entry = TempFileParser.parse(data);
-            resolve(entry);
-            return;
-          }
-
-          reject(err);
-        });
-      });
-    }
-
-    return this.writeToTempFile(tempFile, entry, isNewEntry)
+    return tempFile.write(entry, isNewEntry)
       .then(() => openEditor())
-      .then(() => readTempFile());
-  }
-
-  /**
-   * Writes the specified journal entry to the specified
-   * temp file
-   *
-   * @param tempFile The temp file to write the entry to
-   * @param entry The entry to write to the temp file
-   * @param isNewEntry Whether or not we're writing a new or existing entry to the temp file
-   * @returns A promise that is resolved once the write is complete and rejected on error
-   */
-  private writeToTempFile(tempFile: string, entry: Entry, isNewEntry: boolean) : Promise<string> {
-    return new Promise<string>((resolve, reject) => {
-      const contents = isNewEntry
-        ? `${entry.date}\n${entry.body}`
-        : entry.body;
-
-      fs.writeFile(tempFile, contents, { flag: 'w' },  (err) => {
-        err ? reject(err) : resolve(tempFile);
-      });
-    });
+      .then(() => tempFile.read());
   }
 }
