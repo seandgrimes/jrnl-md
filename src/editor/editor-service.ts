@@ -8,7 +8,7 @@ import {spawn} from 'child_process';
 import {Entry} from '../storage/entry';
 import {TempFileParser} from './tempfile-parser';
 
-/** 
+/**
  * Editor service for interacting with the user's
  * default text editor to create and edit existing
  * journal entries
@@ -18,7 +18,7 @@ export class EditorService {
   private editor: string;
   private tmpDir: string;
 
-  /** 
+  /**
    * Constructor
   */
   constructor() {
@@ -26,10 +26,10 @@ export class EditorService {
     this.tmpDir = os.tmpdir();
   }
 
-  /** 
-   * Opens the user's default editor to create a new journal entry and then 
+  /**
+   * Opens the user's default editor to create a new journal entry and then
    * converts the temp file to a new journal entry once the editor closes
-   * 
+   *
    * @returns A promise containing the new journal entry or null when it is resolved
   */
   createJournalEntry() : Promise<Entry> {
@@ -39,24 +39,24 @@ export class EditorService {
       body: ''
     };
 
-    return this.spawnEditor(tempFile, entry);
+    return this.spawnEditor(tempFile, entry, true);
   }
 
-  /** 
-   * Opens the user's default editor to edit an existing journal entry and then 
+  /**
+   * Opens the user's default editor to edit an existing journal entry and then
    * converts the temp file to a new journal entry once the editor closes
-   * 
+   *
    * @returns A promise containing the new journal entry or null when it is resolved
   */
   editJournalEntry(entry: Entry) : Promise<Entry> {
     const tempFile = this.generateTempFile();
-    return this.spawnEditor(tempFile, entry);
+    return this.spawnEditor(tempFile, entry, false);
   }
 
-  /** 
+  /**
    * Generates a unique temp file name for use when creating
    * or editing existing journal entries
-   * 
+   *
    * @returns A unique temp file name
   */
   private generateTempFile() : string {
@@ -65,28 +65,30 @@ export class EditorService {
 
   /**
    * Opens the specified temp file in the user's default editor
-   * 
+   *
    * @param tempFile The temp file to open in the user's editor
+   * @param entry The entry to edit, can be a new or existing entry
+   * @param isNewEntry Whether or not this is a new or existing entry
    * @returns A promise with the parsed Entry from the temp file
    */
-  private spawnEditor(tempFile: string, entry: Entry) : Promise<Entry> {
+  private spawnEditor(tempFile: string, entry: Entry, isNewEntry: boolean) : Promise<Entry> {
     const openEditor = () => {
       const editorParts = this.editor.split(' ').filter(entry => entry.trim() !== '');
       const editorCmd = editorParts.shift();
       const args = editorParts || [];
-      
+
       return new Promise<void>((resolve, reject) => {
         args.push(tempFile);
-        const editor = spawn(editorCmd, args);      
+        const editor = spawn(editorCmd, args);
         editor.on('close', (code) => {
-          code !== 0 
-            ? reject(`Editor exited with code ${code}`) 
+          code !== 0
+            ? reject(`Editor exited with code ${code}`)
             : resolve();
         });
       });
     }
 
-    const readTempFile = () => { 
+    const readTempFile = () => {
       return new Promise<Entry>((resolve, reject) => {
         fs.readFile(tempFile, 'utf8', (err, data) => {
           if (!err) {
@@ -100,7 +102,7 @@ export class EditorService {
       });
     }
 
-    return this.writeToTempFile(tempFile, entry)
+    return this.writeToTempFile(tempFile, entry, isNewEntry)
       .then(() => openEditor())
       .then(() => readTempFile());
   }
@@ -108,14 +110,18 @@ export class EditorService {
   /**
    * Writes the specified journal entry to the specified
    * temp file
-   * 
+   *
    * @param tempFile The temp file to write the entry to
    * @param entry The entry to write to the temp file
+   * @param isNewEntry Whether or not we're writing a new or existing entry to the temp file
    * @returns A promise that is resolved once the write is complete and rejected on error
    */
-  private writeToTempFile(tempFile: string, entry: Entry) : Promise<string> {
+  private writeToTempFile(tempFile: string, entry: Entry, isNewEntry: boolean) : Promise<string> {
     return new Promise<string>((resolve, reject) => {
-      const contents = `${entry.date}\n${entry.body}`;
+      const contents = isNewEntry
+        ? `${entry.date}\n${entry.body}`
+        : entry.body;
+
       fs.writeFile(tempFile, contents, { flag: 'w' },  (err) => {
         err ? reject(err) : resolve(tempFile);
       });
