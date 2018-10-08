@@ -1,7 +1,7 @@
 import 'mocha';
 import * as moment from 'moment';
 import {expect} from 'chai';
-import {Entry} from '../storage/entry';
+import {DATE_FORMAT} from '../constants';
 import {JournalTempFile} from './journal-temp-file';
 
 describe('JournalTempFile', () => {
@@ -28,7 +28,7 @@ describe('JournalTempFile', () => {
     it('the journal date is written to the file for new entries', async () => {
       // Arrange
       const tempFile = new JournalTempFile();
-      const now = moment().toISOString();
+      const now = moment().format(DATE_FORMAT);
       const entry = {
         date: now,
         body: 'This is a test'
@@ -39,14 +39,14 @@ describe('JournalTempFile', () => {
       const written = await tempFile.read();
 
       // Assert
-      expect(now).to.equal(written.date);
+      expect(now).to.equal(moment(written.date).format(DATE_FORMAT));
     });
 
     it('the journal body is written to the file', async () => {
       // Arrange
       const tempFile = new JournalTempFile();
       const entry = {
-        date: moment().toISOString(),
+        date: moment().format(DATE_FORMAT),
         body: 'This is a test'
       };
 
