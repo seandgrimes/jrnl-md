@@ -5,6 +5,7 @@ import {spawn} from 'child_process';
 import {Entry} from '../storage/entry';
 import { JournalTempFile } from './journal-temp-file';
 import { ConfigService } from '../config/config-service';
+import { DATE_FORMAT } from '../constants';
 
 /**
  * Editor service for interacting with the user's
@@ -28,7 +29,7 @@ export class EditorService {
   createJournalEntry() : Promise<Entry> {
     const tempFile = new JournalTempFile();
     const entry: Entry = {
-      date: moment().format(),
+      date: moment().format(DATE_FORMAT),
       body: ''
     };
 

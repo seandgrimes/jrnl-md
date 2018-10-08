@@ -1,6 +1,8 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as uniqueFilename from 'unique-filename';
+import * as moment from 'moment';
+import {DATE_FORMAT} from '../constants';
 import {Entry} from '../storage/entry';
 
 /**
@@ -60,7 +62,7 @@ class TempFileParser {
     let lines = contents.split('\n');
 
     const entry: Entry = {
-      date: lines[0],
+      date: moment(lines[0], DATE_FORMAT).format(),
       body: lines.join('\n')
     };
 
