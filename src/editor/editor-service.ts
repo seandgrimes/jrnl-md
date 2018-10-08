@@ -4,6 +4,7 @@ import {injectable} from 'inversify';
 import {spawn} from 'child_process';
 import {Entry} from '../storage/entry';
 import { JournalTempFile } from './journal-temp-file';
+import { ConfigService } from '../config/config-service';
 
 /**
  * Editor service for interacting with the user's
@@ -12,13 +13,10 @@ import { JournalTempFile } from './journal-temp-file';
 */
 @injectable()
 export class EditorService {
-  private editor: string;
-
   /**
    * Constructor
   */
-  constructor() {
-    this.editor = process.env.EDITOR;
+  constructor(private configService: ConfigService) {
   }
 
   /**
@@ -56,9 +54,11 @@ export class EditorService {
    * @param isNewEntry Whether or not this is a new or existing entry
    * @returns A promise with the parsed Entry from the temp file
    */
-  private spawnEditor(tempFile: JournalTempFile, entry: Entry, isNewEntry: boolean) : Promise<Entry> {
-    const openEditor = () => {
-      const editorParts = this.editor.split(' ').filter(entry => entry.trim() !== '');
+  private async spawnEditor(tempFile: JournalTempFile, entry: Entry, isNewEntry: boolean) : Promise<Entry> {
+    const openEditor = async () => {
+      const config = await this.configService.getOrCreateConfigFile();
+      const editor = config.editor || process.env.EDITOR;
+      const editorParts = editor.split(' ').filter(entry => entry.trim() !== '');
       const editorCmd = editorParts.shift();
       const args = editorParts || [];
 

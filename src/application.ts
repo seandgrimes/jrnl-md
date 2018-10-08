@@ -10,6 +10,7 @@ import {Entry} from './storage/entry';
 import {FilterParams} from './filter/filter-params';
 import {FilterService} from './filter/filter-service';
 import { Journal } from './storage/journal';
+import { ConfigService } from './config/config-service';
 
 /**
  * Represents our application logic, this class is what the
@@ -28,9 +29,10 @@ export class Application {
   */
   constructor(
       private editorService:EditorService,
-      private filterService:FilterService) {
+      private filterService:FilterService,
+      private configService:ConfigService) {
 
-    this.appDir = path.join(os.homedir(), '.jrnl-md');
+    this.appDir = configService.getStoragePath();
     this.initialize();
   }
 
