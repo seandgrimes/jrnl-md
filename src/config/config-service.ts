@@ -6,6 +6,10 @@ import * as util from 'util';
 import {injectable} from 'inversify';
 import {ConfigFile} from './config-file';
 
+/**
+ * Used to get configuration information to be used by the entire
+ * application
+ */
 @injectable()
 export class ConfigService {
   /**
