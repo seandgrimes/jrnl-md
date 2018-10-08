@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "bin": {
+    "jrnl-md": "./dist/index.js"
+  },
   "dependencies": {
     "inversify": "^4.11.1",
     "marked": "^0.3.16",
