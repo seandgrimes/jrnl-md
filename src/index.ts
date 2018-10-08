@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import * as os from 'os';
 import * as yargs from 'yargs';
 import {Application} from './application';
